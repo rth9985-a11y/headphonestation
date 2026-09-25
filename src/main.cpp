@@ -47,48 +47,13 @@ struct eqPot{
 };
 
 eqPot EQPots[] = { 
-    {
-      .pin = LOW_SHELF_GAIN_POT, 
-      .prevReading = 0.0f, 
-      .scale = 40.0f/1023.0f, 
-      .offset = -20.0f, 
-      // .updateFunction = updateLowShelf
-    },
-    {
-      .pin = HIGH_SHELF_GAIN_POT, 
-      .prevReading =  0.0f, 
-      .scale = 40.0f/1023.0f, 
-      .offset = -20.0f, 
-      // .updateFunction = updateHighShelf
-    },
-    {
-      .pin = PEAKING_EQ_GAIN_POT, 
-      .prevReading =  0.0f, 
-      .scale = 40.0f/1023.0f, 
-      .offset = -20.0f, 
-      // .updateFunction = updatePeakingEQ
-    },
-    {
-      .pin = PEAKING_EQ_FREQ_POT, 
-      .prevReading =  0.0f, 
-      .scale = 9750.0f/1023.0f, 
-      .offset = 250.0f, 
-      // .updateFunction = updatePeakingEQ
-    },
-    {
-      .pin = PEAKING_EQ_Q_POT, 
-      .prevReading =  0.0f, 
-      .scale = 9.0f/1023.0f, 
-      .offset = 1.0f, 
-      // .updateFunction = updatePeakingEQ
-    },
-    {
-      .pin = MASTER_VOLUME_POT, 
-      .prevReading =  0.0f, 
-      .scale = 1.0f/1023.0f, 
-      .offset = 0.0f, 
-    }
-  };
+    {.pin = LOW_SHELF_GAIN_POT, .prevReading = 0.0f, .scale = 40.0f/1023.0f, .offset = -20.0f},
+    {.pin = HIGH_SHELF_GAIN_POT, .prevReading =  0.0f, .scale = 40.0f/1023.0f, .offset = -20.0f},
+    {.pin = PEAKING_EQ_GAIN_POT, .prevReading =  0.0f, .scale = 40.0f/1023.0f, .offset = -20.0f},
+    {.pin = PEAKING_EQ_FREQ_POT, .prevReading =  0.0f, .scale = 9750.0f/1023.0f, .offset = 250.0f},
+    {.pin = PEAKING_EQ_Q_POT, .prevReading =  0.0f, .scale = 9.0f/1023.0f, .offset = 1.0f},
+    {.pin = MASTER_VOLUME_POT, .prevReading =  0.0f, .scale = 1.0f/1023.0f, .offset = 0.0f}
+};
 
 // Function definitions at top
 float32_t readAndNormalizePot(eqPot& p);
@@ -167,25 +132,19 @@ void loop(){
         updateHighShelf(0, 8000.0f, highshelfGain, 0.707);
       }
       if (p.pin == PEAKING_EQ_GAIN_POT){
-        // float32_t targetPeakingGain = rawReading;
-        // peakingGain = targetPeakingGain - peakingGain * 0.50f;
         peakingGain = rawReading;
         updatePeakingEQ(0, 100.0f, rawReading, peakingQ);
-        // updatePeakingEQ(0, 0.0f, 0.0f, 0.0f);
       }
       if (p.pin == PEAKING_EQ_FREQ_POT){
         peakingFrequency = rawReading;
         updatePeakingEQ(0, peakingFrequency, peakingGain, peakingQ);
-        // updatePeakingEQ(0, 0.0f, 0.0f, 0.0f);
       }
       if (p.pin == PEAKING_EQ_Q_POT){
         peakingQ = rawReading;
         updatePeakingEQ(0, peakingFrequency, peakingGain, peakingQ);
-        // updatePeakingEQ(0, 0.0f, 0.0f, 0.0f);
       }
       if (p.pin == MASTER_VOLUME_POT){
         codecGain = rawReading;
-        // Serial.println(codecGain);
         codec.volume(codecGain);
       }
     }
@@ -194,6 +153,9 @@ void loop(){
 
 }
 
+/*
+Helper functions
+*/
 float32_t readAndScalePot_f32(int pin){
   return (float32_t) analogRead(pin) * 0.00488758553f;
 }
