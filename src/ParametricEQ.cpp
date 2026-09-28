@@ -46,7 +46,7 @@ void ParametricEQ::parametricEQInit(){
 @param  q:            quality factor or steepness of filter approaching f0
 */
 void ParametricEQ::setHighShelf(int stage_index, float32_t gainDb, float32_t f0, float32_t q) {
-
+  
   float32_t A = powf(10.f, gainDb / 40.0f); 
   float32_t w0 = 2 * PI * (f0 / 44100);
   float32_t alpha = sin(w0) / (2 * q);
@@ -119,8 +119,13 @@ void ParametricEQ::setLowShelf(int stage_index, float32_t gainDb, float32_t f0, 
 }
 
 void ParametricEQ::setPeaking(int stage_index, float32_t gainDb, float32_t f0, float32_t q){
-  float32_t A = powf(10.0f, gainDb / 40.0f);
-  float32_t w0 = 2 * PI * (f0 / 44100);
+
+  static float32_t gain_prev = 0.0f;
+  float32_t gain_out = gain_prev + 0.5 * (gainDb - gain_prev);
+  gain_prev = gain_out;
+
+  float32_t A = powf(10.0f, gain_out / 40.0f);
+  float32_t w0 = 2 * PI * (f0 / 44100); 
   float32_t alpha = arm_sin_f32(w0) / (2 * q);
 
   float32_t cos_w0 = arm_cos_f32(w0);

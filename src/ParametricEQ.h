@@ -2,6 +2,7 @@
 #include <Audio.h>
 #include "arm_math.h"
 #include <cstdlib>
+#include "ParamSmoother.h"
 
 #define NUM_STAGES 3
 #define BLOCK_SIZE 128
@@ -27,4 +28,5 @@ private:
   //    how MAC works!
   float32_t coeffs[5 * NUM_STAGES] = {};
   float32_t states[4 * NUM_STAGES] = {}; 
+
 };

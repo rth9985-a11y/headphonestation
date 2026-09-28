@@ -13,11 +13,11 @@
 #define HIGH_SHELF_GAIN_POT 41 
 #define PEAKING_EQ_GAIN_POT 40      
 #define PEAKING_EQ_FREQ_POT 25 
-#define PEAKING_EQ_Q_POT 24        
-#define MID_MUTE_BUTTON 0
-#define SIDE_MUTE_BUTTON 1
+#define PEAKING_EQ_Q_POT 24     
+#define MID_MUTE_BUTTON 33 // Remember to wire these up
+#define SIDE_MUTE_BUTTON 32 // Remember to wire these up
 #define MID_GAIN_POT 38
-#define SIDE_GAIN_POT 14
+#define SIDE_GAIN_POT 27 
 
 // Instantiate Audio Objects 
 AudioInputUSB usbIn;
@@ -38,11 +38,11 @@ AudioConnection patchCord6(midSide, 1, headphoneOut, 1);
 struct eqPot{
   int8_t pin;
   float32_t prevReading;
+
   // Mapping
   float32_t scale;
   float32_t offset;
 
-  // void (*updateFunction)(int, float32_t, float32_t, float32_t); // function to update
   static constexpr float32_t DEADBAND = 0.30f; // This works, CHANGE TO A DIFFERENT VALUE FOR EVERY POT
 };
 
@@ -67,7 +67,7 @@ void setup(){
   delay(500);
   Serial.println("BOOT");
 
-  AudioMemory(35); 
+  AudioMemory(100); 
   codec.enable();
   pinMode(MASTER_VOLUME_POT, INPUT); 
   codec.volume(0.75);
@@ -77,7 +77,6 @@ void setup(){
   midSide.init();
 
   // updatePeakingEQ(0, 500.0f, 0.0f, 0.0f);
- 
 }
  
 /*  
@@ -108,8 +107,18 @@ void loop(){
     midGain = readAndScalePot_f32(MID_GAIN_POT);
     sideGain = readAndScalePot_f32(SIDE_GAIN_POT);
 
+    if (midGain <= 0.0f) midGain = 0.0f;
+    if (sideGain <= 0.0f) sideGain = 0.0f;
+
     midSide.setMidGain(midGain);
     midSide.setSideGain(sideGain);
+
+    Serial.printf("Mid Gain: %.2f, Side Gain: %.2f\n", midGain, sideGain);
+
+    // midSide.setMidGain(0.1f);
+    // midSide.setSideGain(0.7f);
+
+    Serial.println(AudioMemoryUsage());
 
   }
 
@@ -157,7 +166,7 @@ void loop(){
 Helper functions
 */
 float32_t readAndScalePot_f32(int pin){
-  return (float32_t) analogRead(pin) * 0.00488758553f;
+  return (float32_t) analogRead(pin) * 0.0009775171 - 0.25f;
 }
 
 float32_t readAndNormalizePot(eqPot& p){
