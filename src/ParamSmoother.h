@@ -9,5 +9,4 @@ public:
 private:
     float32_t alpha = 0.1f;
     float32_t state = 0.0f;
-
 };

@@ -29,4 +29,15 @@ private:
   float32_t coeffs[5 * NUM_STAGES] = {};
   float32_t states[4 * NUM_STAGES] = {}; 
 
+  // All parameter smoothing for peaking EQ section
+  ParamSmoother peaking_Q_smoother;
+  ParamSmoother peaking_gain_smoother;
+  ParamSmoother peaking_freq_smoother;
+
+  // All parameter smoothing for high-shelf eq section
+  ParamSmoother highshelf_gain_smoother;
+
+  // Parameter smoothing for low-shelf gain
+  ParamSmoother lowshelf_gain_smoother;
+
 };
