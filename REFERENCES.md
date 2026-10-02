@@ -16,6 +16,8 @@ RLC Circuit Differential Equation: https://www.youtube.com/watch?v=RF9EyZCGGx0&t
 ## Biquads
 Implementing Biquads (pretty much everything you could need to know): https://www.youtube.com/watch?v=rDERCmBAv3I&t=115s
 
+## Basics of Embedded Systems 
+Cornell ECE-3140 Lecture Notes: https://ocw.ece.cornell.edu/ece-3140-course-details/ece-3140-lecture-notes/
 
 
 
