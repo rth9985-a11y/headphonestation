@@ -5,5 +5,6 @@ void ParamSmoother::setAlpha(float32_t a){
 }
 
 float32_t ParamSmoother::process(float32_t target){
-    return state + alpha * (target - state);
+    state = (alpha * target) + ((1 - alpha) * state);
+    return state;
 }

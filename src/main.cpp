@@ -26,6 +26,9 @@ AudioControlSGTL5000 codec;
 ParametricEQ mainEqL;
 ParametricEQ mainEqR;
 MS midSide;
+ParamSmoother gainSmoother;
+ParamSmoother midGainSmoother;
+ParamSmoother sideGainSmoother;
 
 AudioConnection patchCord1(usbIn, 0, mainEqL, 0);
 AudioConnection patchCord2(usbIn, 1, mainEqR, 0);
@@ -52,7 +55,6 @@ eqPot EQPots[] = {
     {.pin = PEAKING_EQ_GAIN_POT, .prevReading =  0.0f, .scale = 40.0f/1023.0f, .offset = -20.0f},
     {.pin = PEAKING_EQ_FREQ_POT, .prevReading =  0.0f, .scale = 9750.0f/1023.0f, .offset = 250.0f},
     {.pin = PEAKING_EQ_Q_POT, .prevReading =  0.0f, .scale = 9.0f/1023.0f, .offset = 1.0f},
-    {.pin = MASTER_VOLUME_POT, .prevReading =  0.0f, .scale = 1.0f/1023.0f, .offset = 0.0f}
 };
 
 // Function definitions at top
@@ -76,7 +78,10 @@ void setup(){
   mainEqR.parametricEQInit();
   midSide.init();
 
-  // updatePeakingEQ(0, 500.0f, 0.0f, 0.0f);
+  midGainSmoother.setAlpha(0.5f);
+  sideGainSmoother.setAlpha(0.5f);
+  gainSmoother.setAlpha(0.5f);
+
 }
  
 /*  
@@ -104,21 +109,21 @@ void loop(){
   
   if (currentMS - prevMS >= updateInterval){
 
-    midGain = readAndScalePot_f32(MID_GAIN_POT);
-    sideGain = readAndScalePot_f32(SIDE_GAIN_POT);
+    midGain = midGainSmoother.process(readAndScalePot_f32(MID_GAIN_POT));
+    sideGain = sideGainSmoother.process(readAndScalePot_f32(SIDE_GAIN_POT));
+    codecGain = gainSmoother.process(readAndScalePot_f32(MASTER_VOLUME_POT));
 
     if (midGain <= 0.0f) midGain = 0.0f;
     if (sideGain <= 0.0f) sideGain = 0.0f;
+    if (codecGain <= 0.0f) codecGain = 0.0f;
 
     midSide.setMidGain(midGain);
     midSide.setSideGain(sideGain);
+    codec.volume(codecGain);
 
-    Serial.printf("Mid Gain: %.2f, Side Gain: %.2f\n", midGain, sideGain);
 
-    // midSide.setMidGain(0.1f);
-    // midSide.setSideGain(0.7f);
 
-    Serial.println(AudioMemoryUsage());
+    // Serial.printf("Mid Gain: %.2f, Side Gain: %.2f, Master Volume: %.2f\n", midGain, sideGain, codecGain);
 
   }
 
@@ -130,8 +135,6 @@ void loop(){
     if (fabsf(rawReading - p.prevReading) >= p.DEADBAND){
       p.prevReading = rawReading;
 
-      // Find a better way to deploy an update function for each pots
-      // I don't like passing a pointer to the function, but maybe now that there are global updates it will work?
       if (p.pin == LOW_SHELF_GAIN_POT){
         lowshelfGain = rawReading;
         updateLowShelf(0, 60.0f, lowshelfGain, 0.707);
@@ -151,10 +154,6 @@ void loop(){
       if (p.pin == PEAKING_EQ_Q_POT){
         peakingQ = rawReading;
         updatePeakingEQ(0, peakingFrequency, peakingGain, peakingQ);
-      }
-      if (p.pin == MASTER_VOLUME_POT){
-        codecGain = rawReading;
-        codec.volume(codecGain);
       }
     }
   }
