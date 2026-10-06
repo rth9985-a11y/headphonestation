@@ -13,16 +13,16 @@ void ButtonInterrupt::init(){
 
 void setDataDirection(bool isInput){
     if (isInput){
-        uint32_t tmp = IOMUXC_SW_MUX_CTL_PAD_GPIO_EMC_07;
+        uint32_t tmp = READ_GPIO_EMC_07();
         tmp &= ~0xF;
         tmp |= ((1 << 4) & 0xF);
         WRITE_GPIO_EMC_07(tmp);
     }
 
-    uint32_t tmp = IOMUXC_SW_MUX_CTL_PAD_GPIO_EMC_07;
+    uint32_t tmp = READ_GPIO_EMC_07();
     tmp &= ~0xF;
     tmp |= ((0 << 4) & 0xF);
-    READ_GPIO_EMC_07(tmp);
+    WRITE_GPIO_EMC_07(tmp);
 }
 
 void setIOMUX_GPIO_MODE(){

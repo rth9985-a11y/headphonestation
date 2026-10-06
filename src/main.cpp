@@ -7,29 +7,32 @@
 #include "ParametricEQ.h"
 #include "MS.h"
 
-// Define all potentiometer pins (all analog inputs)
-#define MASTER_VOLUME_POT 26
+// POT DEFINES
+#define GAIN_POT 38
 #define LOW_SHELF_GAIN_POT 39
-#define HIGH_SHELF_GAIN_POT 41 
-#define PEAKING_EQ_GAIN_POT 40      
-#define PEAKING_EQ_FREQ_POT 25 
-#define PEAKING_EQ_Q_POT 24     
-#define MID_MUTE_BUTTON 33 // Remember to wire these up
-#define SIDE_MUTE_BUTTON 32 // Remember to wire these up
-#define MID_GAIN_POT 38
-#define SIDE_GAIN_POT 27 
+#define PEAKING_EQ_CONTROL_POT 40
+#define HIGH_SHELF_GAIN_POT 41
 
-// Instantiate Audio Objects 
+// BUTTON DEFINES
+#define PEAKING_EQ_TOGGLE_BUTTON 29
+#define GAIN_TOGGLE_BUTTON 33
+
+
+/* ---------- CLASS INSTANTIATIONS ----------*/
+// Instantiate Audio Objects (this is where all of the custom DSP is too)
 AudioInputUSB usbIn;
 AudioOutputI2S headphoneOut;
 AudioControlSGTL5000 codec;
 ParametricEQ mainEqL;
 ParametricEQ mainEqR;
 MS midSide;
-ParamSmoother gainSmoother;
-ParamSmoother midGainSmoother;
-ParamSmoother sideGainSmoother;
 
+// Gain smoother object instantiations for gains
+ParamSmoother master_gain_smoother;
+ParamSmoother side_gain_smoother;
+ParamSmoother mid_gain_smoother;
+
+// Patching audio objects
 AudioConnection patchCord1(usbIn, 0, mainEqL, 0);
 AudioConnection patchCord2(usbIn, 1, mainEqR, 0);
 AudioConnection patchCord3(mainEqL, 0, midSide, 0);
@@ -37,139 +40,100 @@ AudioConnection patchCord4(mainEqR, 0, midSide, 1);
 AudioConnection patchCord5(midSide, 0, headphoneOut, 0);
 AudioConnection patchCord6(midSide, 1, headphoneOut, 1);
 
-// Represents a single pot, used for reading and mapping a pots raw value
-struct eqPot{
-  int8_t pin;
-  float32_t prevReading;
-
-  // Mapping
-  float32_t scale;
-  float32_t offset;
-
-  static constexpr float32_t DEADBAND = 0.30f; // This works, CHANGE TO A DIFFERENT VALUE FOR EVERY POT
-};
-
-eqPot EQPots[] = { 
-    {.pin = LOW_SHELF_GAIN_POT, .prevReading = 0.0f, .scale = 40.0f/1023.0f, .offset = -20.0f},
-    {.pin = HIGH_SHELF_GAIN_POT, .prevReading =  0.0f, .scale = 40.0f/1023.0f, .offset = -20.0f},
-    {.pin = PEAKING_EQ_GAIN_POT, .prevReading =  0.0f, .scale = 40.0f/1023.0f, .offset = -20.0f},
-    {.pin = PEAKING_EQ_FREQ_POT, .prevReading =  0.0f, .scale = 9750.0f/1023.0f, .offset = 250.0f},
-    {.pin = PEAKING_EQ_Q_POT, .prevReading =  0.0f, .scale = 9.0f/1023.0f, .offset = 1.0f},
-};
-
-// Function definitions at top
-float32_t readAndNormalizePot(eqPot& p);
+/* ---------- FUNCTION FORWARD DEFINITIONS ---------- */
 void updateLowShelf(int stageIndex, float32_t f0, float32_t gain, float32_t q);
 void updateHighShelf(int stageIndex, float32_t f0, float32_t gain, float32_t q);
 void updatePeakingEQ(int stageIndex, float32_t f0, float32_t gain, float32_t q);
 float32_t readAndScalePot_f32(int pin);
+float32_t readAndScale(int pin, float32_t upper);
+void toggle_button_handler(int button, int *gain_toggle_index, unsigned long main_millis, unsigned long* prev_millis, int* gain_toggle_prev);
+void gain_toggle_handler(int index);
 
 void setup(){
+  // SERIAL SETUP
   Serial.begin(300);
   delay(500);
   Serial.println("BOOT");
 
+  // AUDIO LIBRARY (Init stuff)
   AudioMemory(100); 
   codec.enable();
-  pinMode(MASTER_VOLUME_POT, INPUT); 
   codec.volume(0.75);
 
+  // CONFIGURE I/O DDIR (Arduino HAL)
+  pinMode(GAIN_POT, INPUT); 
+  pinMode(LOW_SHELF_GAIN_POT, INPUT);
+  pinMode(PEAKING_EQ_CONTROL_POT, INPUT);
+  pinMode(HIGH_SHELF_GAIN_POT, INPUT);
+
+  // Custom audio object inits
   mainEqL.parametricEQInit();
   mainEqR.parametricEQInit();
   midSide.init();
 
-  midGainSmoother.setAlpha(0.5f);
-  sideGainSmoother.setAlpha(0.5f);
-  gainSmoother.setAlpha(0.5f);
-
+  // Set smoothing coefficients for gain pot
+  master_gain_smoother.setAlpha(0.5f);
+  side_gain_smoother.setAlpha(0.5f);
+  mid_gain_smoother.setAlpha(0.5f);
 }
  
-/*  
-All potentiometer global variables
-*/
-// EQ pots
+/* ---------- GLOBAL VARIABLES ---------- */
+// EQ Macros
 float32_t lowshelfGain = 1.0f;
 float32_t highshelfGain = 1.0f;
 float32_t peakingGain = 1.0f;
 float32_t peakingFrequency = 3000.0f;
 float32_t peakingQ = 2.0f;
-// MS pots
+
+// MS toggleable pots
 float32_t midGain = 1.0f;
 float32_t sideGain = 1.0f;
-// Master volume pot
 float32_t codecGain = 0.7f;
 
-// Update all EQ parameters and read interval
-unsigned long prevMS = 0;
-uint16_t updateInterval = 8; 
+// PEAKING EQ TOGGLE (states and index)
 
+// GAIN TOGGLE (states and index)
+int gain_toggle_idx = 0;
+int gain_toggle_prev_button = 0;
+unsigned long gain_toggle_prev_millis = millis();
+unsigned long currentMS = millis();
+
+// PRINT TIMING VARS
+unsigned long prevMS = 0;
+uint16_t updateInterval = 20;
 
 void loop(){
-  unsigned long currentMS = millis();
+  currentMS = millis();
   
+  // GAIN TOGGLE HANDLING AND UPDATE
+  toggle_button_handler(GAIN_TOGGLE_BUTTON, &gain_toggle_idx, currentMS, &gain_toggle_prev_millis, &gain_toggle_prev_button);
+  gain_toggle_handler(gain_toggle_idx);
+  midSide.setMidGain(midGain);
+  midSide.setSideGain(sideGain);
+  codec.volume(codecGain);
+
+  // PEAKING EQ TOGGLE HANDLING AND UPDATE -------------------------------- TODO
+
+
+  // DEBUG PRINTING
   if (currentMS - prevMS >= updateInterval){
-
-    midGain = midGainSmoother.process(readAndScalePot_f32(MID_GAIN_POT));
-    sideGain = sideGainSmoother.process(readAndScalePot_f32(SIDE_GAIN_POT));
-    codecGain = gainSmoother.process(readAndScalePot_f32(MASTER_VOLUME_POT));
-
-    if (midGain <= 0.0f) midGain = 0.0f;
-    if (sideGain <= 0.0f) sideGain = 0.0f;
-    if (codecGain <= 0.0f) codecGain = 0.0f;
-
-    midSide.setMidGain(midGain);
-    midSide.setSideGain(sideGain);
-    codec.volume(codecGain);
-
-
-
-    // Serial.printf("Mid Gain: %.2f, Side Gain: %.2f, Master Volume: %.2f\n", midGain, sideGain, codecGain);
-
+    Serial.printf("Gain IDX: %d, Mid Gain: %.2f, Side Gain: %.2f, Master Volume: %.2f\n", 
+                  midGain, sideGain, codecGain);
+    prevMS = currentMS;
   }
-
-  // Update EQ pots if they move, always polling though... is there a way to configure interrupts for this?
-  for (auto& p : EQPots){
-
-    float32_t rawReading = readAndNormalizePot(p);
-
-    if (fabsf(rawReading - p.prevReading) >= p.DEADBAND){
-      p.prevReading = rawReading;
-
-      if (p.pin == LOW_SHELF_GAIN_POT){
-        lowshelfGain = rawReading;
-        updateLowShelf(0, 60.0f, lowshelfGain, 0.707);
-      }
-      if (p.pin == HIGH_SHELF_GAIN_POT){
-        highshelfGain = rawReading;
-        updateHighShelf(0, 8000.0f, highshelfGain, 0.707);
-      }
-      if (p.pin == PEAKING_EQ_GAIN_POT){
-        peakingGain = rawReading;
-        updatePeakingEQ(0, 100.0f, rawReading, peakingQ);
-      }
-      if (p.pin == PEAKING_EQ_FREQ_POT){
-        peakingFrequency = rawReading;
-        updatePeakingEQ(0, peakingFrequency, peakingGain, peakingQ);
-      }
-      if (p.pin == PEAKING_EQ_Q_POT){
-        peakingQ = rawReading;
-        updatePeakingEQ(0, peakingFrequency, peakingGain, peakingQ);
-      }
-    }
-  }
-
-
 }
 
-/*
-Helper functions
-*/
+
+
+// ---------- HELPER FUNCTIONS ----------
+
+// Scaling methods
 float32_t readAndScalePot_f32(int pin){
   return (float32_t) analogRead(pin) * 0.0009775171 - 0.25f;
 }
 
-float32_t readAndNormalizePot(eqPot& p){
-  return (float32_t) analogRead(p.pin) * p.scale + p.offset;
+float32_t readAndScale(int pin, float32_t upper){
+  return (float32_t) analogRead(pin) * (upper/1023.0f);
 }
 
 void updateLowShelf(int stageIndex, float32_t f0, float32_t gain, float32_t q){
@@ -186,3 +150,30 @@ void updatePeakingEQ(int stageIndex, float32_t f0, float32_t gain, float32_t q){
   mainEqL.setPeaking(1, gain, f0, q);
   mainEqR.setPeaking(1, gain, f0, q);
 }
+
+// Analog Reading methods
+void toggle_button_handler(int button, int *gain_toggle_index, unsigned long main_millis, 
+                            unsigned long* prev_millis, int* gain_toggle_prev)
+  {
+  int reading = digitalRead(button);
+  if (main_millis - *prev_millis >= 20){
+    if (reading == 1 && gain_toggle_prev == 0) {
+      *gain_toggle_index = ((*gain_toggle_index) + 1) % 3;
+    }
+    *prev_millis = main_millis;
+    *gain_toggle_prev = 1;
+  }
+}
+
+void gain_toggle_handler(int index){
+  if (index == 0){
+    codecGain = master_gain_smoother.process(readAndScale(GAIN_POT, 0.75));
+  }
+  if (index == 1){
+    midGain = mid_gain_smoother.process(readAndScale(GAIN_POT, 0.75f));
+  }
+  if (index == 2){
+    sideGain = side_gain_smoother.process(readAndScale(GAIN_POT, 0.75f));
+  }
+} 
+
