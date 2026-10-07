@@ -19,6 +19,10 @@ Implementing Biquads (pretty much everything you could need to know): https://ww
 ## Basics of Embedded Systems 
 Cornell ECE-3140 Lecture Notes: https://ocw.ece.cornell.edu/ece-3140-course-details/ece-3140-lecture-notes/
 
+## DSP general
+
+https://www.earlevel.com/main/ 
+
 
 
 

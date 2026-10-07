@@ -2,6 +2,7 @@
 #include <Audio.h>
 #include <arm_math.h>
 #include <cstdint>
+#define MAX_DELAY 10
 
 class CrossTalk : public AudioStream {
 public:
