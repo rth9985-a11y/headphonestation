@@ -1,0 +1,61 @@
+<mxfile host="65bd71144e">
+    <diagram id="DrW92bAt9iloXeASrl0D" name="Page-1">
+        <mxGraphModel dx="458" dy="233" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-1" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="P1" vertex="1">
+                    <mxGeometry height="60" width="60" x="170" y="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-2" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="P2" vertex="1">
+                    <mxGeometry height="60" width="60" x="250" y="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-3" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="P3" vertex="1">
+                    <mxGeometry height="60" width="60" x="330" y="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-4" parent="1" style="whiteSpace=wrap;html=1;" value="B1" vertex="1">
+                    <mxGeometry height="40" width="40" x="420" y="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-5" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="P4" vertex="1">
+                    <mxGeometry height="90" width="90" x="580" y="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-6" parent="1" style="whiteSpace=wrap;html=1;" value="B2" vertex="1">
+                    <mxGeometry height="40" width="40" x="540" y="250" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-7" parent="1" style="whiteSpace=wrap;html=1;" value="B3" vertex="1">
+                    <mxGeometry height="40" width="40" x="605" y="250" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-8" parent="1" style="whiteSpace=wrap;html=1;" value="B4" vertex="1">
+                    <mxGeometry height="40" width="40" x="670" y="250" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-9" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="P1 = Low Shelf Gain" vertex="1">
+                    <mxGeometry height="30" width="150" x="790" y="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-10" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="P2 = Togglable - gain, q, freq" vertex="1">
+                    <mxGeometry height="30" width="170" x="790" y="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-11" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="P3 = High Shelf Gain" vertex="1">
+                    <mxGeometry height="30" width="170" x="790" y="145" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-12" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="P3 = TOGGLABLE - M/S, master vol" vertex="1">
+                    <mxGeometry height="30" width="220" x="790" y="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-13" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="B1 = TOGGLE - Peaking EQ param" vertex="1">
+                    <mxGeometry height="30" width="220" x="790" y="215" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-14" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="B2 = TOGGLE - Master vol select" vertex="1">
+                    <mxGeometry height="30" width="220" x="790" y="250" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-15" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="B3 = TOGGLE - Mid vol select" vertex="1">
+                    <mxGeometry height="30" width="220" x="790" y="285" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-16" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="B4 = TOGGLE - Side vol select" vertex="1">
+                    <mxGeometry height="30" width="220" x="790" y="320" as="geometry"/>
+                </mxCell>
+                <mxCell id="4ZvoUkrHjQYROtwjtoo3-17" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;rounded=0;" value="B3 + B4 = TOGGLE - Width (side delay amt)" vertex="1">
+                    <mxGeometry height="30" width="240" x="790" y="360" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
