@@ -8,9 +8,15 @@
 #include "MS.h"
 #include "teensy_pins.h"
 
-// Struct for a toggle button
-// These are for the peaking eq function toggle and gain/MS toggle 
-typedef struct ToggleButton{
+/*
+TOGGLE_BUTTON
+button_pin: Button pin to read from
+toggle_index: The index of the mode
+current_ms: The current time to compare to prev (rate limiting)
+prev_millis: time of the last button reading    (rate limiting)
+prev_button_state: State of the last reading 
+*/
+typedef struct {
   int button_pin;
   int toggle_index;
   unsigned long current_ms;
@@ -18,21 +24,25 @@ typedef struct ToggleButton{
   int prev_button_state;
 }TOGGLE_BUTTON;
 
-// One PICKUP struct per toggle button
-// Used to keep the state of each mode and check if the mode is locked
+/*
+PICKUP
+stored_raw[3]: Hold current values of all modes on one potentiometer
+last_raw: last raw reading of current mode
+locked: Is current mode locked?
+*/
 typedef struct {
   int  stored_raw[3];   // current values of each mode 
   int  last_raw;
   bool locked;
 } PICKUP;
 
-// button structs
+// Button structs
 TOGGLE_BUTTON peaking_eq_toggle_button_struct =   {PEAKING_EQ_TOGGLE_BUTTON, 0, 0, 0, 0};
 TOGGLE_BUTTON gain_toggle_button_struct       =   {GAIN_TOGGLE_BUTTON, 0, 0, 0, 0};
 
 // POT LOCKING
-PICKUP gain_pot_pickup =  {{955, 1023, 1023},    0,        false};   // master, mid, side
-PICKUP eq_pot_pickup   =  {{554, 153, 162},      0,        false};   // gain, freq, Q
+PICKUP gain_pot_pickup =  {{955, 1023, 1023}, 0, false};   // master, mid, side
+PICKUP eq_pot_pickup   =  {{554, 153, 162}, 0, false};   // gain, freq, Q
 
 /* ---------- CLASS INSTANTIATIONS ----------*/
 AudioInputUSB usbIn;
@@ -66,7 +76,7 @@ float32_t readAndScale(int pin, float32_t upper, float32_t offset);
 void toggle_button_handler(TOGGLE_BUTTON* b);
 void gain_toggle_handler(int index);
 void peaking_eq_toggle_handler(int index);
-bool pickup_update(PICKUP* p, int idx, int raw, int window);
+bool pickup_update(PICKUP* p, int idx, int raw);
 
 void setup(){
   // SERIAL SETUP
@@ -214,7 +224,7 @@ void toggle_button_handler(TOGGLE_BUTTON* b)
 // Index handlers
 void gain_toggle_handler(int index){
 	int raw = analogRead(GAIN_POT);
-	if (!pickup_update(&gain_pot_pickup, index, raw, WINDOW)) return;
+	if (!pickup_update(&gain_pot_pickup, index, raw)) return;
   	if (index == 0) codecGain = master_gain_smoother.process(readAndScale(GAIN_POT, 1.00, -0.25f));
   	if (index == 1) midGain = mid_gain_smoother.process(readAndScale(GAIN_POT, 1.00f, -0.25f));
   	if (index == 2) sideGain = side_gain_smoother.process(readAndScale(GAIN_POT, 1.00f, -0.25f));
@@ -223,7 +233,7 @@ void gain_toggle_handler(int index){
 
 void peaking_eq_toggle_handler(int index){
 	int raw = analogRead(PEAKING_EQ_CONTROL_POT);
-	if (!pickup_update(&eq_pot_pickup, index, raw, WINDOW)) return;
+	if (!pickup_update(&eq_pot_pickup, index, raw)) return;
 
   	if (index == 0) peakingGain = peaking_gain_smoother.process(readAndScale(PEAKING_EQ_CONTROL_POT, 24.0f, -12.0f));
   	if (index == 1) peakingFrequency = peaking_freq_smoother.process(readAndScale(PEAKING_EQ_CONTROL_POT, 19980.0f, 20.0f));
@@ -231,12 +241,15 @@ void peaking_eq_toggle_handler(int index){
 }
 
 
-bool pickup_update(PICKUP* p, int idx, int raw, int window) {
+bool pickup_update(PICKUP* p, int idx, int raw){
+  // Check if the pickup object is locked
   if (p->locked) {
-    int target = p->stored_raw[idx];
-    bool inside  = abs(raw - target) <= (window >> 1);
-    bool crossed = (long)(p->last_raw - target) * (raw - target) <= 0;
-    if (inside || crossed) p->locked = false;
+    int target = p->stored_raw[idx];                          // Target is number that we want match to begin updating
+
+    // Distance from target {|raw reading - target|} within the range {window size/2}
+    bool inside  = abs(raw - target) <= (WINDOW >> 1);        // Inside is the range surrounding target 
+    bool crossed = (long)(p->last_raw - target) * (raw - target) <= 0; // ??
+    if (inside || crossed) p->locked = false;                 // Unlock the pot if the crossed or inside threshold
   }
   p->last_raw = raw;
   if (p->locked) return false;
